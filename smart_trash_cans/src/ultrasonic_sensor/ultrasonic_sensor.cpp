@@ -9,8 +9,8 @@ int greenPin;
 
 long duration;
 float distance;
-int trashCanHeight = 7;      // Height of the trash can in inches
-const float threshold = 2.5; // From this thresold trashcan is considered full
+int trashCanHeight = 8;      // Height of the trash can in inches
+const float threshold = 3.9; // From this thresold trashcan is considered full
 int percentageFull = 0;
 bool isFull = false;
 

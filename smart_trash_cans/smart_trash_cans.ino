@@ -1,7 +1,7 @@
 #include "src/tilt_sensor/tilt_sensor.h"
 #include "src/ir_avoidance_sensor/ir_avoidance_sensor.h"
 #include "src/ultrasonic_sensor/ultrasonic_sensor.h"
-
+#include "src/esp8266/esp8266.h"
 // Pins and leds for tilt sensor
 const int tiltTrashLed = 8;
 const int tiltTrashSensor = 7;
@@ -21,6 +21,8 @@ const int ultGreenPin = 6;
 void setup()
 {
   Serial.begin(9600);
+  setup_esp8266("Hotspot", "11111111");
+  delay(10);
   tilt_sensor_setup(tiltTrashLed, tiltTrashSensor);
   delay(1);
   ir_avoidance_sensor_setup(irTrashEnable, irTrashSensor, irTrashLed);
@@ -35,7 +37,6 @@ void loop()
   ultrasonic_sensor_status status = handle_ult_sensor();
   bool isFull = status.isFull;
   float percentageFull = status.percentageFull;
-
 
   if (is_trash_can_tipped())
   {
