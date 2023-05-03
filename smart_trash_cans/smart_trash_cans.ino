@@ -2,6 +2,7 @@
 #include "src/ir_avoidance_sensor/ir_avoidance_sensor.h"
 #include "src/ultrasonic_sensor/ultrasonic_sensor.h"
 #include "src/esp8266/esp8266.h"
+
 // Pins and leds for tilt sensor
 const int tiltTrashLed = 8;
 const int tiltTrashSensor = 7;
@@ -24,37 +25,43 @@ void setup()
   setup_esp8266("Hotspot", "11111111");
   delay(10);
   tilt_sensor_setup(tiltTrashLed, tiltTrashSensor);
-  delay(1);
+  delay(10);
   ir_avoidance_sensor_setup(irTrashEnable, irTrashSensor, irTrashLed);
-  delay(1);
+  delay(10);
   ultrasonic_sensor_setup(echoPin, trigPin, ultRedPin, ultBluePin, ultGreenPin);
   // put your setup code here, to run once:
-  delay(1500);
+  delay(10000);
+  Serial.println(sendGetRequest("192.168.137.1", "3080", "api/sensors/424242").data);
 }
 
 void loop()
 {
-  ultrasonic_sensor_status status = handle_ult_sensor();
-  bool isFull = status.isFull;
-  float percentageFull = status.percentageFull;
+  // ultrasonic_sensor_status status = handle_ult_sensor();
+  // bool i5sFull = status.isFull;
+  // float percentageFull = status.percentageFull;
 
-  if (is_trash_can_tipped())
-  {
-    Serial.println("Trash can is tipped");
-  }
-  else
-  {
-    Serial.println("Trash can is not tipped");
-  }
+  // if (is_trash_can_tipped())
+  // {
+  //   Serial.println("Trash can is tipped");
+  // }
+  // else
+  // {
+  //   Serial.println("Trash can is not tipped");
+  // }
 
-  if (is_trash_can_full())
+  // if (is_trash_can_full())
+  // {
+  //   Serial.println("IR_avoidance sensor trash can is full");
+  // }
+  // else
+  // {
+  //   Serial.println("IR_avoidance sensor trash can is not full");
+  // }
+  if (Serial.available())
   {
-    Serial.println("IR_avoidance sensor trash can is full");
+    String command = Serial.readStringUntil('\n');
+    sendCommand(command, "OK");
   }
-  else
-  {
-    Serial.println("IR_avoidance sensor trash can is not full");
-  }
-  delay(2000);
+  delay(1000);
   // put your main code here, to run repeatedly:
 }
