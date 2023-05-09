@@ -18,11 +18,11 @@ const int echoPin = 3;
 const int ultRedPin = 5;
 const int ultBluePin = 4;
 const int ultGreenPin = 6;
-
+bool isEspReady = false;
 void setup()
 {
   Serial.begin(9600);
-  setup_esp8266("Hotspot", "11111111");
+  isEspReady = setup_esp8266("Hotspot", "11111111");
   delay(10);
   tilt_sensor_setup(tiltTrashLed, tiltTrashSensor);
   delay(10);
@@ -30,33 +30,35 @@ void setup()
   delay(10);
   ultrasonic_sensor_setup(echoPin, trigPin, ultRedPin, ultBluePin, ultGreenPin);
   // put your setup code here, to run once:
-  delay(10000);
-  Serial.println(sendGetRequest("192.168.137.1", "3080", "api/sensors/424242").data);
+  delay(3000);
 }
 
 void loop()
 {
-  // ultrasonic_sensor_status status = handle_ult_sensor();
-  // bool i5sFull = status.isFull;
-  // float percentageFull = status.percentageFull;
+  ultrasonic_sensor_status status = handle_ult_sensor();
+  bool i5sFull = status.isFull;
+  float percentageFull = status.percentageFull;
+  if (isEspReady)
+  {
+    if (is_trash_can_tipped())
+    {
+      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 1, "tilt_sensor").data);
+    }
+    else
+    {
+      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 0, "tilt_sensor").data);
+    }
 
-  // if (is_trash_can_tipped())
-  // {
-  //   Serial.println("Trash can is tipped");
-  // }
-  // else
-  // {
-  //   Serial.println("Trash can is not tipped");
-  // }
+    if (is_trash_can_full())
+    {
+      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 1, "ir_sensor").data);
+    }
+    else
+    {
+      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 0, "ir_sensor").data);
+    }
+  }
 
-  // if (is_trash_can_full())
-  // {
-  //   Serial.println("IR_avoidance sensor trash can is full");
-  // }
-  // else
-  // {
-  //   Serial.println("IR_avoidance sensor trash can is not full");
-  // }
   if (Serial.available())
   {
     String command = Serial.readStringUntil('\n');
