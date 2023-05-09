@@ -37,7 +37,7 @@ void loop()
 {
   ultrasonic_sensor_status status = handle_ult_sensor();
   bool i5sFull = status.isFull;
-  float percentageFull = status.percentageFull;
+  int percentageFull = status.percentageFull;
   if (isEspReady)
   {
     if (is_trash_can_tipped())
@@ -57,6 +57,7 @@ void loop()
     {
       Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 0, "ir_sensor").data);
     }
+    Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", percentageFull, "us_sensor").data);
   }
 
   if (Serial.available())
