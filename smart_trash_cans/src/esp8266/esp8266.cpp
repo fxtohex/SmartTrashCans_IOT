@@ -5,6 +5,9 @@
 // Use Serial1 for communication with ESP-01
 #define ESP_SERIAL Serial1
 
+volatile unsigned long httpTimeout = 60000;
+volatile unsigned long httpStartTime = 0;
+volatile boolean httpInProgress = false;
 boolean echoFind(String target)
 {
   unsigned long timeout = 30000;
@@ -37,15 +40,15 @@ boolean echoFind(String target)
 api_response sendPutRequest(String url, String port, String endpoint, int value, String sensorName)
 {
   Serial.println("Making PUT request to " + url);
-  delay(1000);
+  delay(100);
+  // make the request
+  // make the request
   if (!sendCommand("AT+CIPSTART=\"TCP\",\"" + url + "\"," + port, "OK"))
   {
-    return {false, "failed_to_connect"};
+    Serial.println("ESP-01 connection to tcp failed");
+    return {false, "failed_to_connect_to_tcp_server"};
   }
-
-  // make the request
-  // make the request
-
+  delay(100);
   String contentType = "application/json";
   String requestBody = "{\"value\":" + String(value) + ",\"name\":" + "\"" + String(sensorName) + "\"" + "}";
   // String cmd = "PUT /" + endpoint + " HTTP/1.1\r\nHost: " + url + "\r\n\r\n";
@@ -57,41 +60,43 @@ api_response sendPutRequest(String url, String port, String endpoint, int value,
                "\r\n" +
                requestBody;
 
-  Serial.println(cmd);
-
   int cmdLength = cmd.length();
   if (!sendCommand("AT+CIPSEND=" + String(cmdLength), ">"))
   {
     return {false, "failed_to_send"};
   }
-  delay(1000);
+  delay(100);
   if (!sendCommand(cmd, "OK"))
   {
+
     return {false, "failed_to_send"};
   }
 
-  delay(1000);
+  delay(100);
   // Read response from server
 
   String response = "";
 
   unsigned long timeout = 60000;
   unsigned long start_time = millis();
-
-  while (true)
+  bool loop = true;
+  while (loop)
   {
     while (ESP_SERIAL.available())
     {
       char c = ESP_SERIAL.read();
       response += c;
     }
-    delay(1000);
+    delay(100);
     Serial.print("Received: ");
     Serial.println(response);
+    loop = false;
+  }
+  delay(100);
+  if (sendCommand("AT+CIPCLOSE", "OK"))
+  {
     return {true, response};
   }
-  Serial.print("Request Timed out");
-  return {false, response};
 }
 
 api_response sendGetRequest(String url, String port, String endpoint)
@@ -123,7 +128,7 @@ api_response sendGetRequest(String url, String port, String endpoint)
 
   String response = "";
 
-  unsigned long timeout = 60000;
+  unsigned long timeout = 3000;
   unsigned long start_time = millis();
 
   while (true)
@@ -133,7 +138,7 @@ api_response sendGetRequest(String url, String port, String endpoint)
       char c = ESP_SERIAL.read();
       response += c;
     }
-    delay(1000);
+    delay(10);
     Serial.print("Received: ");
     Serial.println(response);
     return {true, response};
@@ -159,7 +164,7 @@ boolean sendCommand(String cmd, String ack)
 }
 
 // Sets up the esp and connects it to the designated AP
-boolean setup_esp8266(String _ap, String _password)
+boolean setup_esp8266(String _ap, String _password, String url, String port)
 {
   // Start the Serial Monitor
   Serial.begin(9600);
@@ -180,14 +185,13 @@ boolean setup_esp8266(String _ap, String _password)
 
   // Connect to an access point
   String connectCmd = "AT+CWJAP=\"" + _ap + "\",\"" + _password + "\"";
-  if (sendCommand(connectCmd, "OK"))
-  {
-    Serial.println("ESP-01 connected to AP");
-    return true;
-  }
-  else
+  if (!sendCommand(connectCmd, "OK"))
   {
     return false;
     Serial.println("ESP-01 connection to AP failed");
+  }
+  else
+  {
+    return true;
   }
 }

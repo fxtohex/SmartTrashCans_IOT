@@ -22,7 +22,7 @@ bool isEspReady = false;
 void setup()
 {
   Serial.begin(9600);
-  isEspReady = setup_esp8266("Hotspot", "11111111");
+  isEspReady = setup_esp8266("Hotspot", "11111111", "192.168.137.1", "3080");
   delay(10);
   tilt_sensor_setup(tiltTrashLed, tiltTrashSensor);
   delay(10);
@@ -32,32 +32,37 @@ void setup()
   // put your setup code here, to run once:
   delay(3000);
 }
-
+bool prevTiltSensorState = false;
+bool prevIrSensorState = false;
 void loop()
 {
+
   ultrasonic_sensor_status status = handle_ult_sensor();
   bool i5sFull = status.isFull;
+  bool tiltSensorState = is_trash_can_tipped();
+  bool irSensorState = is_trash_can_full();
   int percentageFull = status.percentageFull;
+  int prevPercentageFull = 0;
+
   if (isEspReady)
   {
-    if (is_trash_can_tipped())
+    if (tiltSensorState != prevTiltSensorState)
     {
-      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 1, "tilt_sensor").data);
-    }
-    else
-    {
-      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 0, "tilt_sensor").data);
+      prevTiltSensorState = tiltSensorState;
+      sendPutRequest("192.168.137.1", "3080", "api/sensors/", tiltSensorState, "tilt_sensor");
     }
 
-    if (is_trash_can_full())
+    if (percentageFull != prevPercentageFull)
     {
-      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 1, "ir_sensor").data);
+      prevPercentageFull = percentageFull;
+      sendPutRequest("192.168.137.1", "3080", "api/sensors/", percentageFull, "us_sensor");
     }
-    else
+
+    if (irSensorState != prevIrSensorState)
     {
-      Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", 0, "ir_sensor").data);
+      prevIrSensorState = irSensorState;
+      sendPutRequest("192.168.137.1", "3080", "api/sensors/", irSensorState, "ir_sensor");
     }
-    Serial.println(sendPutRequest("192.168.137.1", "3080", "api/sensors/", percentageFull, "us_sensor").data);
   }
 
   if (Serial.available())

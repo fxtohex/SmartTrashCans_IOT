@@ -22,11 +22,13 @@ bool is_trash_can_full()
   int digitalVal = digitalRead(outPin);
   if (HIGH == digitalVal)
   {
+    Serial.println("IR sensor is not triggered");
     digitalWrite(irTrashledPin, LOW); // turn the led off
     return false;
   }
   else
   {
+    Serial.println("IR sensor is triggered");
     digitalWrite(irTrashledPin, HIGH); // turn the led on
     return true;
   }
